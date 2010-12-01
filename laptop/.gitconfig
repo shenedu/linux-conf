@@ -1,0 +1,20 @@
+[user]
+	name = feng
+	email = shenedu@gmail.com
+[core]
+	editor = vim
+[merge]
+	tool = vimdiff
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+	grep = auto
+	ui = always
+[diff]
+[diff]
+	tool = gvimdiff
+[difftool]
+	prompt = false
+[format]
+	pretty = %h - %an, %ar : %s
