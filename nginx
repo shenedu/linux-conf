@@ -1,0 +1,88 @@
+packages:
+apt-get install 
+  nginx php5-cgi spawn-fcgi php5-mysql mysql-server
+
+----------------------------------------------------
+
+nginx.conf:
+    #gzip
+    gzip  on;
+    gzip_http_version 1.0;
+    gzip_vary on;
+    gzip_comp_level 6;
+    gzip_proxied any;
+    gzip_types text/plain text/html text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+    # make sure gzip does not lose large gzipped js or css files
+    # see http://blog.leetsoft.com/2007/7/25/nginx-gzip-ssl
+    gzip_buffers 16 8k;
+
+-------------------------------------------------------
+site-available:
+server {
+        listen   80 default;
+        server_name wordpress.me;
+
+        access_log  /var/log/nginx/wordpress.access.log;
+
+        location / {
+                root   /var/www/wordpress;
+                index  index.php index.html index.htm;
+        }
+        #add expires header 
+        location ~* \.(ico|css|js|gif|jpe?g|png)(\?[0-9]+)?$ {
+                root   /var/www/wordpress;
+                expires max;
+        }
+        location ~ \.php$ {
+                fastcgi_pass   127.0.0.1:9000;
+                fastcgi_index  index.php;
+                fastcgi_param  SCRIPT_FILENAME  /var/www/wordpress$fastcgi_script_name;
+                include fastcgi_params;
+        }
+}
+
+
+---------------------------------
+spawn-fcgi.sh
+/usr/bin/spawn-fcgi -a 127.0.0.1 -p 9000 -u www-data -C 2 -f /usr/bin/php5-cgi
+
+
+---------------------------------
+wordpress plugin
+1 .WP-Cache
+
+----------------------------------
+nginx tomacat
+ server {
+        listen       80;
+        server_name  some-server.com www.server-name.com;
+
+        access_log  logs/host.access.log  main;
+
+        # Main location
+        location / {
+            proxy_pass         http://127.0.0.1:8080/;
+            proxy_redirect     off;
+
+            proxy_set_header   Host             $host;
+            proxy_set_header   X-Real-IP        $remote_addr;
+            proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+
+            client_max_body_size       10m;
+            client_body_buffer_size    128k;
+
+            proxy_connect_timeout      90;
+            proxy_send_timeout         90;
+            proxy_read_timeout         90;
+
+            proxy_buffer_size          4k;
+            proxy_buffers              4 32k;
+            proxy_busy_buffers_size    64k;
+            proxy_temp_file_write_size 64k;
+        }
+
+        # Static files location
+        location ~* ^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)$ {
+            root   /spool/www/members_ng;
+        }
+    }
